@@ -213,30 +213,33 @@ configure_apache() {
     print_step "Criando VirtualHost..."
 cat > /etc/apache2/sites-available/${PROJECT_NAME}.conf <<EOF
 
-<IfModule mod_ssl.c>
-    <VirtualHost *:443>
-        ServerName ${SERVER_NAME}
-
-        DocumentRoot ${INSTALL_DIR}
-
-        <Directory ${INSTALL_DIR}>
-            Options -Indexes +FollowSymLinks
-            AllowOverride All
-            Require all granted
-        </Directory>
-
-        SSLEngine on
-        SSLCertificateFile /etc/ssl/certs/ssl-cert-snakeoil.pem
-        SSLCertificateKeyFile /etc/ssl/private/ssl-cert-snakeoil.key
-
-        ErrorLog \${APACHE_LOG_DIR}/${PROJECT_NAME}_error.log
-        CustomLog \${APACHE_LOG_DIR}/${PROJECT_NAME}_access.log combined
-    </VirtualHost>
-</IfModule>
-
 <VirtualHost *:80>
     ServerName ${SERVER_NAME}
-    Redirect permanent / https://${SERVER_NAME}/
+
+    RewriteEngine On
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^/?(.*) https://%{SERVER_NAME}/\$1 [R=301,L]
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerName ${SERVER_NAME}
+
+    DocumentRoot ${INSTALL_DIR}/public
+
+    SSLEngine on
+    SSLCertificateFile /etc/ssl/seederlinux-lite/seederlinux-lite.crt
+    SSLCertificateKeyFile /etc/ssl/seederlinux-lite/seederlinux-lite.key
+
+    <Directory ${INSTALL_DIR}/public>
+        Options -Indexes +FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    ErrorLog \${APACHE_LOG_DIR}/${PROJECT_NAME}_error.log
+    CustomLog \${APACHE_LOG_DIR}/${PROJECT_NAME}_access.log combined
+
+    Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
 </VirtualHost>
 
 EOF

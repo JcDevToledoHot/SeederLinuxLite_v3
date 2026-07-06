@@ -11,8 +11,8 @@ sudo ./install/install.sh
 ## Acesso
 
 - Página Pública: http://localhost/
-- Painel Admin: http://localhost/admin
-- Login: http://localhost/login
+- Painel Admin: http://localhost/admin.html
+- Login: http://localhost/login.html
 
 ## Credenciais Padrão
 
@@ -24,14 +24,24 @@ sudo ./install/install.sh
 ## Estrutura do Projeto
 
 ```
-├── api/                 # API REST PHP
-│   └── index.php       # Router principal
-├── includes/           # Bibliotecas de autenticação
-├── lib/               # Conexão e funções PHP
-├── public/            # Frontend (HTML/CSS/JS)
-├── scripts/           # Scripts shell de provisionamento
-├── install/           # Instalador e schema SQL
-└── downloads/         # Agente Python e documentação
+├── public/             # Web root (DocumentRoot do Apache)
+│   ├── api/            # API REST PHP (router + download handler)
+│   ├── assets/         # CSS e JavaScript do frontend
+│   ├── includes/       # Bibliotecas de autenticação
+│   ├── lib/            # Conexão com DB, config e funções PHP
+│   ├── downloads/      # Agente Python e documentação
+│   ├── scripts/        # Scripts shell de provisionamento
+│   ├── storage/        # Armazenamento de bundles gerados
+│   ├── admin.html      # Painel administrativo
+│   ├── check.html      # Diagnóstico de conectividade
+│   ├── index.html      # Página pública
+│   └── login.html      # Tela de login
+├── install/            # Instalador e schema SQL
+│   ├── install.sh      # Script de instalação
+│   ├── deploy.sh       # Script de deploy manual
+│   └── schema.sql      # Schema do banco PostgreSQL
+├── .env                # Configuração de ambiente
+└── .htaccess           # Redireciona para public/ (dev local)
 ```
 
 ## Uso do Agente

@@ -1,30 +1,19 @@
 RewriteEngine On
 
-# Redirect trailing slashes
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)/$ /$1 [L,R=301]
+# Redirect root to index.html
+RewriteRule ^$ index.html [L]
 
-# Redirect root to public/index.html (change URL in browser)
-RewriteCond %{REQUEST_URI} ^/$
-RewriteRule ^$ /public/index.html [R=302,L]
+# Redirect /public to root (remove /public from URLs if someone accesses it)
+RewriteRule ^public/(.*)$ /$1 [R=301,L]
 
-# API routing - redirect to index.php with query parameter
+# API routing - route api/ requests to api/index.php
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^api/?$ /api/index.php [L,QSA]
-
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^api/(.+)$ /api/index.php?action=$1 [QSA,L]
-
-# Short URLs for pages (redirect to public folder)
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^login$ /public/login.html [R=302,L]
+RewriteRule ^api/?$ api/index.php [L,QSA]
 
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^admin$ /public/admin.html [R=302,L]
+RewriteRule ^api/(.+)$ api/index.php?action=$1 [QSA,L]
 
 # Security headers
 <IfModule mod_headers.c>
@@ -48,9 +37,5 @@ Options -Indexes
 </FilesMatch>
 
 # Block access to sensitive directories
-RedirectMatch 403 ^/lib/
-RedirectMatch 403 ^/includes/
-RedirectMatch 403 ^/scripts/
 RedirectMatch 403 ^/install/
-RedirectMatch 403 ^/templates/
 RedirectMatch 403 ^/storage/

@@ -3,9 +3,9 @@
  * Common utilities and functions
  */
 
-// API helper with relative path (works when public/ is DocumentRoot)
+// API helper with absolute path from root
 const API = {
-    baseUrl: 'api/',
+    baseUrl: '/api/',
 
     async request(action, method = 'GET', data = null) {
         // Build URL with action parameter
@@ -56,24 +56,40 @@ const API = {
 const Toast = {
     show(message, type = 'info', duration = 4000) {
         const container = document.getElementById('toast-container');
+        if (!container) {
+            // Create container if it doesn't exist
+            const newContainer = document.createElement('div');
+            newContainer.id = 'toast-container';
+            newContainer.className = 'fixed bottom-4 right-4 z-50 space-y-2';
+            document.body.appendChild(newContainer);
+        }
+        const toastContainer = document.getElementById('toast-container');
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
         toast.style.cssText = `
             background: ${this.getBgColor(type)};
             border-left: 4px solid ${this.getBorderColor(type)};
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: white;
+            min-width: 300px;
+            max-width: 500px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5);
+            transform: translateX(0);
+            transition: all 0.3s ease;
         `;
         toast.innerHTML = `
             <div class="flex items-center gap-3">
                 ${this.getIcon(type)}
-                <span>${message}</span>
-                <button class="ml-2 opacity-70 hover:opacity-100" onclick="this.parentElement.parentElement.remove()">
+                <span class="flex-1 text-sm">${message}</span>
+                <button class="ml-2 opacity-70 hover:opacity-100 text-white" onclick="this.parentElement.parentElement.remove()">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
             </div>
         `;
-        container.appendChild(toast);
+        toastContainer.appendChild(toast);
 
         setTimeout(() => {
             toast.style.opacity = '0';
@@ -104,10 +120,10 @@ const Toast = {
 
     getIcon(type) {
         const icons = {
-            success: '<svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>',
-            error: '<svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>',
-            warning: '<svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>',
-            info: '<svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+            success: '<svg class="w-5 h-5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>',
+            error: '<svg class="w-5 h-5 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>',
+            warning: '<svg class="w-5 h-5 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>',
+            info: '<svg class="w-5 h-5 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
         };
         return icons[type] || icons.info;
     },
@@ -155,6 +171,7 @@ const Utils = {
     },
 
     escapeHtml(text) {
+        if (!text) return '';
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;

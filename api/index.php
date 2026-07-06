@@ -6,6 +6,7 @@
 
 declare(strict_types=1);
 
+// Include paths from public folder
 require_once __DIR__ . '/../includes/auth.php';
 
 header('Content-Type: application/json; charset=utf-8');
