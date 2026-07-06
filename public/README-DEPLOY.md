@@ -77,15 +77,18 @@ sudo -u postgres psql -f install/schema.sql
 
 ### 5. Configurar ambiente
 
-Crie `/var/www/seederlinux/public/lib/config.env.php` ou use variáveis de ambiente:
+Crie `/var/www/seederlinux/.env` (fora da pasta public, não acessível via web):
 
-```php
-<?php
-$_ENV['DB_HOST'] = 'localhost';
-$_ENV['DB_PORT'] = '5432';
-$_ENV['DB_NAME'] = 'seederlinux';
-$_ENV['DB_USER'] = 'seeder';
-$_ENV['DB_PASS'] = 'sua_senha';
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=seederlinux
+DB_USER=seeder
+DB_PASS=sua_senha
+
+APP_NAME=SeederLinux Lite
+APP_VERSION=1.0.0
+DEBUG=false
 ```
 
 ### 6. Permissões

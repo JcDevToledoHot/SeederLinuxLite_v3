@@ -4,27 +4,11 @@ RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)/$ /$1 [L,R=301]
 
-# Redirect root to public/index.html (change URL in browser)
-RewriteCond %{REQUEST_URI} ^/$
-RewriteRule ^$ /public/index.html [R=302,L]
-
-# API routing - redirect to index.php with query parameter
+# Serve the public/ folder as the web root
+RewriteCond %{REQUEST_URI} !^/public/
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^api/?$ /api/index.php [L,QSA]
-
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^api/(.+)$ /api/index.php?action=$1 [QSA,L]
-
-# Short URLs for pages (redirect to public folder)
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^login$ /public/login.html [R=302,L]
-
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^admin$ /public/admin.html [R=302,L]
+RewriteRule ^(.*)$ /public/$1 [L]
 
 # Security headers
 <IfModule mod_headers.c>
@@ -48,9 +32,5 @@ Options -Indexes
 </FilesMatch>
 
 # Block access to sensitive directories
-RedirectMatch 403 ^/lib/
-RedirectMatch 403 ^/includes/
-RedirectMatch 403 ^/scripts/
 RedirectMatch 403 ^/install/
-RedirectMatch 403 ^/templates/
-RedirectMatch 403 ^/storage/
+RedirectMatch 403 ^/public/storage/
