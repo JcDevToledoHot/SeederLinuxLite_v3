@@ -11,9 +11,38 @@ class Database {
     private static array $config = [];
 
     /**
+     * Load .env file from project root into $_ENV if present.
+     */
+    private static function loadEnvFile(): void {
+        $candidates = [
+            __DIR__ . '/../.env',
+            __DIR__ . '/../../.env',
+        ];
+        foreach ($candidates as $path) {
+            if (!is_file($path)) continue;
+            $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if ($line === '' || $line[0] === '#') continue;
+                if (!str_contains($line, '=')) continue;
+                [$k, $v] = explode('=', $line, 2);
+                $k = trim($k);
+                $v = trim($v);
+                if (strlen($v) >= 2 && $v[0] === '"' && $v[-1] === '"') {
+                    $v = substr($v, 1, -1);
+                }
+                $_ENV[$k] = $v;
+                putenv("$k=$v");
+            }
+            break;
+        }
+    }
+
+    /**
      * Load configuration from environment or defaults
      */
     private static function loadConfig(): void {
+        self::loadEnvFile();
         self::$config = [
             'host' => $_ENV['DB_HOST'] ?? 'localhost',
             'port' => $_ENV['DB_PORT'] ?? '5432',

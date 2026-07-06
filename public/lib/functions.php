@@ -524,22 +524,6 @@ function validateAllVariables(array $variables): array {
         'warnings' => $allWarnings
     ];
 }
-                break;
-
-            case 'BASE_URL':
-            case 'WALLPAPER_URL':
-            case 'LOGO_URL':
-            case 'OCS_SERVER':
-            case 'PROXY_URL':
-                if (!isValidURL($value)) {
-                    $errors[] = "$name deve ser uma URL válida";
-                }
-                break;
-        }
-    }
-
-    return $errors;
-}
 
 /**
  * Replace placeholders in content
@@ -573,9 +557,9 @@ function extractPlaceholders(string $content): array {
 function logActivity(
     ?int $userId,
     string $action,
-    string $target = null,
+    ?string $target = null,
     ?int $targetId = null,
-    string $details = null,
+    ?string $details = null,
     ?int $orgId = null
 ): void {
     $sessionId = session_id();
@@ -595,9 +579,9 @@ function logActivity(
  */
 function logUserAction(
     string $action,
-    string $target = null,
+    ?string $target = null,
     ?int $targetId = null,
-    string $details = null,
+    ?string $details = null,
     ?int $orgId = null
 ): void {
     $userId = $_SESSION['user_id'] ?? null;
