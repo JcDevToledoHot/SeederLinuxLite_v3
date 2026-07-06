@@ -213,19 +213,30 @@ configure_apache() {
     print_step "Criando VirtualHost..."
 cat > /etc/apache2/sites-available/${PROJECT_NAME}.conf <<EOF
 
+<IfModule mod_ssl.c>
+    <VirtualHost *:443>
+        ServerName ${SERVER_NAME}
+
+        DocumentRoot ${INSTALL_DIR}
+
+        <Directory ${INSTALL_DIR}>
+            Options -Indexes +FollowSymLinks
+            AllowOverride All
+            Require all granted
+        </Directory>
+
+        SSLEngine on
+        SSLCertificateFile /etc/ssl/certs/ssl-cert-snakeoil.pem
+        SSLCertificateKeyFile /etc/ssl/private/ssl-cert-snakeoil.key
+
+        ErrorLog \${APACHE_LOG_DIR}/${PROJECT_NAME}_error.log
+        CustomLog \${APACHE_LOG_DIR}/${PROJECT_NAME}_access.log combined
+    </VirtualHost>
+</IfModule>
+
 <VirtualHost *:80>
     ServerName ${SERVER_NAME}
-
-    DocumentRoot ${INSTALL_DIR}/public
-
-    <Directory ${INSTALL_DIR}/public>
-        Options -Indexes +FollowSymLinks
-        AllowOverride All
-        Require all granted
-    </Directory>
-
-    ErrorLog \${APACHE_LOG_DIR}/${PROJECT_NAME}_error.log
-    CustomLog \${APACHE_LOG_DIR}/${PROJECT_NAME}_access.log combined
+    Redirect permanent / https://${SERVER_NAME}/
 </VirtualHost>
 
 EOF
