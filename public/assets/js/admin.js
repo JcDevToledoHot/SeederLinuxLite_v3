@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const session = await API.get('session');
         if (!session.success) {
-window.location.href = '/login.html';
+            window.location.href = 'public/login.html';
             return;
         }
 
@@ -17,7 +17,7 @@ window.location.href = '/login.html';
         document.getElementById('user-initial').textContent = (session.data.full_name || session.data.username).charAt(0).toUpperCase();
         document.getElementById('user-role').textContent = session.data.role === 'admin' ? 'Administrador' : 'Gerente';
     } catch (error) {
-window.location.href = '/login.html';
+        window.location.href = 'public/login.html';
         return;
     }
 
@@ -71,21 +71,17 @@ async function loadDashboard() {
 
         if (scripts.success) {
             const recentScriptsEl = document.getElementById('recent-scripts');
-            if (scripts.data.length === 0) {
-                recentScriptsEl.innerHTML = '<p class="text-slate-400 text-center">Nenhum script disponível</p>';
-            } else {
-                recentScriptsEl.innerHTML = scripts.data.map(script => `
-                    <div class="flex items-center justify-between py-2 border-b border-slate-700 last:border-0">
-                        <div>
-                            <span class="font-medium text-white">${Utils.escapeHtml(script.name)}</span>
-                            <span class="text-slate-500 text-xs ml-2">${script.filename}</span>
-                        </div>
-                        <span class="px-2 py-1 text-xs rounded ${script.is_core ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700 text-slate-400'}">
-                            ${script.is_core ? 'Core' : 'Custom'}
-                        </span>
+            recentScriptsEl.innerHTML = scripts.data.map(script => `
+                <div class="flex items-center justify-between py-2 border-b border-slate-700 last:border-0">
+                    <div>
+                        <span class="font-medium text-white">${Utils.escapeHtml(script.name)}</span>
+                        <span class="text-slate-500 text-xs ml-2">${script.filename}</span>
                     </div>
-                `).join('');
-            }
+                    <span class="px-2 py-1 text-xs rounded ${script.is_core ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700 text-slate-400'}">
+                        ${script.is_core ? 'Core' : 'Custom'}
+                    </span>
+                </div>
+            `).join('');
         }
     } catch (error) {
         console.error('Error loading dashboard:', error);
@@ -165,7 +161,7 @@ async function selectOrganization(orgId) {
     await loadScriptsForBundle(orgId);
 
     // Update download link
-    document.getElementById('download-link').href = `/api/?action=bundle-download&id=${encodeURIComponent(org.acronym)}`;
+    document.getElementById('download-link').href = `api/?action=bundle-download&id=${encodeURIComponent(org.acronym)}`;
     document.getElementById('bundle-filename').textContent = `provision-${org.acronym.toLowerCase()}.sh`;
 }
 
@@ -181,25 +177,13 @@ async function loadVariables(orgId) {
         const varsList = document.getElementById('vars-list');
         const vars = response.data.variables || [];
 
-        if (vars.length === 0) {
-            varsList.innerHTML = `
-                <div class="col-span-2 text-center py-8 text-slate-400">
-                    Nenhuma variável configurada para esta organização.
-                    <br>
-                    <span class="text-sm">Adicione variáveis no banco de dados para personalizar o provisionamento.</span>
-                </div>
-            `;
-            return;
-        }
-
         // Group by category
         const categories = {};
         vars.forEach(v => {
-            const cat = v.category || 'general';
-            if (!categories[cat]) {
-                categories[cat] = [];
+            if (!categories[v.category]) {
+                categories[v.category] = [];
             }
-            categories[cat].push(v);
+            categories[v.category].push(v);
         });
 
         let html = '';
@@ -237,9 +221,8 @@ async function loadVariables(orgId) {
                             data-var-id="${v.id}"
                             class="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="${Utils.escapeHtml(v.default_value || '')}"
-                            ${v.is_required ? 'required' : ''}
                         >
-                        ${v.description ? `<p class="text-slate-500 text-xs mt-1">${Utils.escapeHtml(v.description)}</p>` : ''}
+                        <p class="text-slate-500 text-xs mt-1">${Utils.escapeHtml(v.description)}</p>
                     </div>
                 `;
             });
@@ -259,11 +242,6 @@ async function loadScriptsForBundle(orgId) {
         if (!response.success) return;
 
         const scriptsList = document.getElementById('bundle-scripts-list');
-        if (response.data.length === 0) {
-            scriptsList.innerHTML = '<p class="text-slate-400 text-center py-4">Nenhum script disponível</p>';
-            return;
-        }
-
         scriptsList.innerHTML = response.data.map((script, index) => `
             <div class="flex items-center justify-between p-3 bg-slate-900 rounded-lg">
                 <div class="flex items-center gap-3">
@@ -295,13 +273,6 @@ function setupEventListeners() {
     document.getElementById('cancel-new-org').addEventListener('click', closeModal);
     document.getElementById('modal-backdrop').addEventListener('click', closeModal);
 
-    // Close modal with Escape key
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            closeModal();
-        }
-    });
-
     // New OM form
     document.getElementById('new-org-form').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -328,7 +299,7 @@ function setupEventListeners() {
     document.getElementById('btn-logout').addEventListener('click', async () => {
         try {
             await API.post('logout');
-window.location.href = '/login.html';
+            window.location.href = 'public/login.html';
         } catch (error) {
             Toast.error('Erro ao sair');
         }
@@ -394,9 +365,7 @@ async function createOrganization() {
             document.getElementById('new-org-form').reset();
             await loadDashboard();
             await loadOrganizations();
-            if (response.data && response.data.id) {
-                selectOrganization(response.data.id);
-            }
+            selectOrganization(response.data.id);
         } else {
             Toast.error(response.error || 'Erro ao criar organização');
         }
@@ -425,11 +394,6 @@ async function updateOrganization() {
             Toast.success('Organização atualizada');
             await loadDashboard();
             await loadOrganizations();
-            // Update the display
-            const org = organizations.find(o => o.id === currentOrgId);
-            if (org) {
-                document.getElementById('om-display-name').textContent = org.name;
-            }
         } else {
             Toast.error(data.error || 'Erro ao atualizar');
         }
