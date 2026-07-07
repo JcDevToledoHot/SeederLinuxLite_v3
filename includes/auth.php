@@ -174,16 +174,68 @@ function changePassword(int $userId, string $currentPassword, string $newPasswor
 }
 
 /**
- * Require admin role
+ * Require admin role (admin_gap or admin)
  */
 function requireAdmin(): void {
     requireAuth();
 
     $user = getCurrentUser();
-    if ($user['role'] !== 'admin') {
+    if (!in_array($user['role'], ['admin', 'admin_gap'])) {
         if (isAjax()) {
             jsonError('Forbidden: Admin access required', 403);
         }
         redirect('/admin.html');
     }
+}
+
+/**
+ * Require a specific role or set of roles
+ */
+function requireRole(array $roles): void {
+    requireAuth();
+
+    $user = getCurrentUser();
+    if (!in_array($user['role'], $roles)) {
+        if (isAjax()) {
+            jsonError('Forbidden: insufficient permissions', 403);
+        }
+        redirect('/admin.html');
+    }
+}
+
+/**
+ * Check if current user is admin_gap (or legacy admin)
+ */
+function isAdminGap(): bool {
+    $user = getCurrentUser();
+    return $user !== null && in_array($user['role'], ['admin', 'admin_gap']);
+}
+
+/**
+ * Check if current user is operador_om
+ */
+function isOperador(): bool {
+    $user = getCurrentUser();
+    return $user !== null && $user['role'] === 'operador_om';
+}
+
+/**
+ * Check if current user is auditor
+ */
+function isAuditor(): bool {
+    $user = getCurrentUser();
+    return $user !== null && $user['role'] === 'auditor';
+}
+
+/**
+ * Get the organization ID the current user is restricted to.
+ * Returns null for admin_gap/auditor (can see all), or the org ID for operador_om.
+ */
+function getUserOrgId(): ?int {
+    $user = getCurrentUser();
+    if (!$user) return null;
+    if (in_array($user['role'], ['admin', 'admin_gap', 'auditor'])) return null;
+    // operador_om: look up their organization_id from the database
+    $row = Database::fetchOne("SELECT organization_id FROM users WHERE id = ?", [$user['id']]);
+    return $row && $row['organization_id'] ? (int) $row['organization_id'] : null;
 }

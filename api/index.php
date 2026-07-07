@@ -101,10 +101,13 @@ try {
         // ===============================
         case 'variables':
             requireAuth();
-            if ($method !== 'GET') {
+            if ($method === 'GET') {
+                handleGetVariables($id);
+            } elseif ($method === 'POST') {
+                handleAddVariable($input);
+            } else {
                 jsonError('Method not allowed', 405);
             }
-            handleGetVariables($id);
             break;
 
         case 'variables-update':
@@ -119,6 +122,7 @@ try {
         // Bundle Endpoints
         // ===============================
         case 'bundle':
+            requireAuth();
             if ($method !== 'GET') {
                 jsonError('Method not allowed', 405);
             }
@@ -126,10 +130,35 @@ try {
             break;
 
         case 'bundle-download':
+            requireAuth();
             if ($method !== 'GET') {
                 jsonError('Method not allowed', 405);
             }
             handleDownloadBundle($id);
+            break;
+
+        case 'generate-bundle':
+            requireAuth();
+            if ($method !== 'POST') {
+                jsonError('Method not allowed', 405);
+            }
+            handleGenerateBundle($input);
+            break;
+
+        case 'bundle-by-id':
+            requireAuth();
+            if ($method !== 'GET') {
+                jsonError('Method not allowed', 405);
+            }
+            handleDownloadBundleById((int) $id);
+            break;
+
+        // ===============================
+        // Dashboard Endpoint
+        // ===============================
+        case 'dashboard':
+            requireAuth();
+            handleGetDashboard();
             break;
 
         // ===============================
@@ -152,6 +181,52 @@ try {
         case 'activity-log':
             requireAuth();
             handleGetActivityLog($id);
+            break;
+
+        // ===============================
+        // Audit Events Endpoint
+        // ===============================
+        case 'audit':
+            requireAuth();
+            handleGetAuditEvents();
+            break;
+
+        // ===============================
+        // Variable Catalog Endpoint
+        // ===============================
+        case 'variable-catalog':
+            requireAuth();
+            handleGetVariableCatalog();
+            break;
+
+        // ===============================
+        // Users Endpoints
+        // ===============================
+        case 'users':
+            requireAuth();
+            requireRole(['admin', 'admin_gap']);
+            if ($method === 'GET') {
+                handleGetUsers();
+            } elseif ($method === 'POST') {
+                handleCreateUser($input);
+            } else {
+                jsonError('Method not allowed', 405);
+            }
+            break;
+
+        case 'user':
+            requireAuth();
+            requireRole(['admin', 'admin_gap']);
+            if (!$id) {
+                jsonError('User ID required', 400);
+            }
+            if ($method === 'PUT') {
+                handleUpdateUser((int) $id, $input);
+            } elseif ($method === 'DELETE') {
+                handleDeleteUser((int) $id);
+            } else {
+                jsonError('Method not allowed', 405);
+            }
             break;
 
         // ===============================
@@ -270,13 +345,28 @@ function handleSessionCheck(): void {
  * Get all organizations
  */
 function handleGetOrganizations(): void {
-    $orgs = Database::fetchAll(
-        "SELECT id, name, acronym, domain, description, is_active,
-                created_at, updated_at
-         FROM organizations
-         WHERE is_active = TRUE
-         ORDER BY acronym ASC"
-    );
+    $userOrgId = getUserOrgId();
+
+    if ($userOrgId !== null) {
+        // operador_om: only their org
+        $orgs = Database::fetchAll(
+            "SELECT id, name, acronym, domain, description, is_active,
+                    created_at, updated_at
+             FROM organizations
+             WHERE is_active = TRUE AND id = ?
+             ORDER BY acronym ASC",
+            [$userOrgId]
+        );
+    } else {
+        // admin_gap/auditor: all orgs
+        $orgs = Database::fetchAll(
+            "SELECT id, name, acronym, domain, description, is_active,
+                    created_at, updated_at
+             FROM organizations
+             WHERE is_active = TRUE
+             ORDER BY acronym ASC"
+        );
+    }
 
     jsonSuccess($orgs);
 }
@@ -304,6 +394,11 @@ function handleGetOrganization(int $id): void {
  * Create organization
  */
 function handleCreateOrganization(array $input): void {
+    // Only admin_gap can create organizations
+    if (!isAdminGap()) {
+        jsonError('Sem permissão para criar organizações', 403);
+    }
+
     if (empty($input['name']) || empty($input['acronym'])) {
         jsonError('Nome e sigla são obrigatórios');
     }
@@ -350,6 +445,7 @@ function handleCreateOrganization(array $input): void {
 
         // Log organization creation
         logActivity($_SESSION['user_id'] ?? null, 'create', 'organization', $orgId, "Created organization '$acronym' - '$name'");
+        logAuditEvent($orgId, 'organization', 'create', $orgId, ['acronym' => $acronym, 'name' => $name]);
 
         jsonSuccess(['id' => $orgId], 'Organização criada com sucesso');
     } catch (Exception $e) {
@@ -440,6 +536,12 @@ function handleGetVariables(?string $orgId): void {
 
     $orgId = (int) $orgId;
 
+    // Permission check
+    $userOrgId = getUserOrgId();
+    if ($userOrgId !== null && $userOrgId !== $orgId) {
+        jsonError('Sem permissão para esta organização', 403);
+    }
+
     $org = Database::fetchOne("SELECT id, acronym FROM organizations WHERE id = ?", [$orgId]);
 
     if (!$org) {
@@ -465,6 +567,65 @@ function handleGetVariables(?string $orgId): void {
 /**
  * Update organization variables with validation
  */
+// ============================================================================
+// Handler: Add Variable to Organization
+// ============================================================================
+function handleAddVariable(array $input): void {
+    $orgId = (int) ($input['organization_id'] ?? 0);
+    $name = sanitizeInput($input['name'] ?? '');
+    $value = $input['value'] ?? '';
+    $description = sanitizeInput($input['description'] ?? '');
+    $category = sanitizeInput($input['category'] ?? 'general');
+    $required = !empty($input['required']);
+
+    if (!$orgId || !$name) {
+        jsonError('organization_id e name são obrigatórios', 400);
+    }
+
+    // Permission check
+    $userOrgId = getUserOrgId();
+    if ($userOrgId !== null && $userOrgId !== $orgId) {
+        jsonError('Sem permissão para esta organização', 403);
+    }
+
+    // Check if variable definition exists, create if not
+    $varDef = Database::fetchOne("SELECT id FROM variable_definitions WHERE name = ?", [$name]);
+    if (!$varDef) {
+        Database::execute(
+            "INSERT INTO variable_definitions (name, placeholder, description, category, is_required)
+             VALUES (?, ?, ?, ?, ?)",
+            [$name, '{{' . $name . '}}', $description, $category, $required]
+        );
+        $varDefId = (int) Database::lastInsertId();
+    } else {
+        $varDefId = (int) $varDef['id'];
+    }
+
+    // Check if org already has this variable
+    $existing = Database::fetchOne(
+        "SELECT id FROM organization_variables WHERE organization_id = ? AND variable_id = ?",
+        [$orgId, $varDefId]
+    );
+
+    if ($existing) {
+        // Update existing
+        Database::execute(
+            "UPDATE organization_variables SET value = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+            [$value, $existing['id']]
+        );
+    } else {
+        // Insert new
+        Database::execute(
+            "INSERT INTO organization_variables (organization_id, variable_id, value) VALUES (?, ?, ?)",
+            [$orgId, $varDefId, $value]
+        );
+    }
+
+    logAuditEvent($orgId, 'variable', 'create', $varDefId, ['name' => $name]);
+
+    jsonSuccess(['variable_id' => $varDefId], 'Variável adicionada com sucesso');
+}
+
 function handleUpdateVariables(array $input): void {
     if (empty($input['organization_id']) || empty($input['variables'])) {
         jsonError('Organization ID and variables are required');
@@ -472,6 +633,12 @@ function handleUpdateVariables(array $input): void {
 
     $orgId = (int) $input['organization_id'];
     $variables = $input['variables'];
+
+    // Permission check
+    $userOrgId = getUserOrgId();
+    if ($userOrgId !== null && $userOrgId !== $orgId) {
+        jsonError('Sem permissão para esta organização', 403);
+    }
 
     $org = Database::fetchOne("SELECT id, acronym FROM organizations WHERE id = ?", [$orgId]);
 
@@ -527,13 +694,39 @@ function handleUpdateVariables(array $input): void {
  * Get scripts list
  */
 function handleGetScripts(): void {
-    $scripts = Database::fetchAll(
-        "SELECT id, name, filename, description, is_core, execution_order,
-                created_at, updated_at
-         FROM scripts
-         WHERE is_active = TRUE
-         ORDER BY is_core DESC, execution_order ASC"
-    );
+    $userOrgId = getUserOrgId();
+    $orgFilter = $_GET['org'] ?? null;
+
+    if ($userOrgId !== null) {
+        // operador_om: core scripts + their org's custom scripts
+        $scripts = Database::fetchAll(
+            "SELECT id, name, filename, description, is_core, execution_order, version, organization_id,
+                    created_at, updated_at
+             FROM scripts
+             WHERE is_active = TRUE AND (is_core = TRUE OR organization_id = ?)
+             ORDER BY is_core DESC, execution_order ASC",
+            [$userOrgId]
+        );
+    } else if ($orgFilter) {
+        // admin_gap filtering by org
+        $scripts = Database::fetchAll(
+            "SELECT id, name, filename, description, is_core, execution_order, version, organization_id,
+                    created_at, updated_at
+             FROM scripts
+             WHERE is_active = TRUE AND (is_core = TRUE OR organization_id = ?)
+             ORDER BY is_core DESC, execution_order ASC",
+            [(int) $orgFilter]
+        );
+    } else {
+        // admin_gap: all scripts
+        $scripts = Database::fetchAll(
+            "SELECT id, name, filename, description, is_core, execution_order, version, organization_id,
+                    created_at, updated_at
+             FROM scripts
+             WHERE is_active = TRUE
+             ORDER BY is_core DESC, execution_order ASC"
+        );
+    }
 
     jsonSuccess($scripts);
 }
@@ -551,6 +744,15 @@ function handleUploadScript(): void {
     $name = sanitizeInput($input['name']);
     $description = sanitizeInput($input['description'] ?? '');
     $content = $input['content']; // Don't sanitize - script content
+    $isCore = !empty($input['is_core']) && isAdminGap();
+    $orgId = !empty($input['organization_id']) ? (int) $input['organization_id'] : null;
+
+    // operador_om can only upload custom scripts for their own org
+    $userOrgId = getUserOrgId();
+    if ($userOrgId !== null) {
+        $orgId = $userOrgId;
+        $isCore = false;
+    }
 
     // Validate script content
     if (strpos($content, '#!/bin/bash') === false && strpos($content, '#!/usr/bin/env bash') === false) {
@@ -578,7 +780,8 @@ function handleUploadScript(): void {
     }
 
     // Generate filename
-    $filename = 'custom_' . strtolower(preg_replace('/[^a-zA-Z0-9]/', '_', $name)) . '.sh';
+    $prefix = $isCore ? 'core' : 'custom';
+    $filename = $prefix . '_' . strtolower(preg_replace('/[^a-zA-Z0-9]/', '_', $name)) . '.sh';
 
     // Check if filename exists
     $existing = Database::fetchOne(
@@ -587,25 +790,27 @@ function handleUploadScript(): void {
     );
 
     if ($existing) {
-        $filename = 'custom_' . strtolower(preg_replace('/[^a-zA-Z0-9]/', '_', $name)) . '_' . time() . '.sh';
+        $filename = $prefix . '_' . strtolower(preg_replace('/[^a-zA-Z0-9]/', '_', $name)) . '_' . time() . '.sh';
     }
 
-    // Get max execution order for custom scripts
-    $maxOrder = Database::fetchOne(
-        "SELECT COALESCE(MAX(execution_order), 0) as max_order FROM scripts WHERE is_core = FALSE"
+    // Get max execution order
+    $maxOrder = (int) Database::fetchOne(
+        "SELECT COALESCE(MAX(execution_order), 0) as max_order FROM scripts WHERE is_core = ?",
+        [$isCore]
     )['max_order'];
 
     // Insert script
     Database::execute(
-        "INSERT INTO scripts (name, filename, description, content, is_core, execution_order)
-         VALUES (?, ?, ?, ?, FALSE, ?)",
-        [$name, $filename, $description, $content, $maxOrder + 1]
+        "INSERT INTO scripts (name, filename, description, content, is_core, execution_order, organization_id, version)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 1)",
+        [$name, $filename, $description, $content, $isCore, $maxOrder + 1, $orgId]
     );
 
-    logActivity($_SESSION['user_id'] ?? null, 'create', 'script', (int) Database::lastInsertId(), "Script '$name' uploaded with filename '$filename'");
+    $scriptId = (int) Database::lastInsertId();
+    logAuditEvent($orgId, 'script', 'create', $scriptId, ['name' => $name, 'is_core' => $isCore]);
 
     jsonSuccess([
-        'id' => (int) Database::lastInsertId(),
+        'id' => $scriptId,
         'filename' => $filename,
         'placeholders' => $placeholders
     ], 'Script enviado com sucesso');
@@ -977,4 +1182,341 @@ function handleUpdateSettings(array $input): void {
         'updated' => $updated,
         'message' => count($updated) . ' configurações atualizadas'
     ], 'Configurações atualizadas com sucesso');
+}
+
+// ============================================================================
+// Handler: Get Dashboard
+// ============================================================================
+function handleGetDashboard(): void {
+    $userOrgId = getUserOrgId();
+
+    if ($userOrgId !== null) {
+        // operador_om: only their org
+        $orgCount = 1;
+        $varCount = (int) Database::fetchOne(
+            "SELECT COUNT(*) AS c FROM organization_variables WHERE organization_id = ?",
+            [$userOrgId]
+        )['c'];
+        $scriptCount = (int) Database::fetchOne(
+            "SELECT COUNT(*) AS c FROM scripts WHERE is_active = TRUE AND (organization_id = ? OR is_core = TRUE)",
+            [$userOrgId]
+        )['c'];
+        $bundleCount = (int) Database::fetchOne(
+            "SELECT COUNT(*) AS c FROM deploy_bundles WHERE organization_id = ? AND generated_at >= date_trunc('month', CURRENT_TIMESTAMP)",
+            [$userOrgId]
+        )['c'];
+    } else {
+        // admin_gap/auditor: all orgs
+        $orgCount = (int) Database::fetchOne("SELECT COUNT(*) AS c FROM organizations WHERE is_active = TRUE")['c'];
+        $varCount = (int) Database::fetchOne("SELECT COUNT(*) AS c FROM organization_variables")['c'];
+        $scriptCount = (int) Database::fetchOne("SELECT COUNT(*) AS c FROM scripts WHERE is_active = TRUE")['c'];
+        $bundleCount = (int) Database::fetchOne("SELECT COUNT(*) AS c FROM deploy_bundles WHERE generated_at >= date_trunc('month', CURRENT_TIMESTAMP)")['c'];
+    }
+
+    jsonSuccess([
+        'organizations' => $orgCount,
+        'variables' => $varCount,
+        'scripts' => $scriptCount,
+        'bundles_this_month' => $bundleCount,
+    ]);
+}
+
+// ============================================================================
+// Handler: Get Audit Events
+// ============================================================================
+function handleGetAuditEvents(): void {
+    $userOrgId = getUserOrgId();
+    $limit = min((int) ($_GET['limit'] ?? 100), 500);
+    $orgFilter = $userOrgId ?? (isset($_GET['org']) ? (int) $_GET['org'] : null);
+
+    if ($orgFilter !== null) {
+        $events = Database::fetchAll(
+            "SELECT ae.*, u.username, u.full_name, o.acronym AS org_acronym
+             FROM audit_events ae
+             LEFT JOIN users u ON u.id = ae.user_id
+             LEFT JOIN organizations o ON o.id = ae.organization_id
+             WHERE ae.organization_id = ?
+             ORDER BY ae.created_at DESC
+             LIMIT ?",
+            [$orgFilter, $limit]
+        );
+    } else {
+        $events = Database::fetchAll(
+            "SELECT ae.*, u.username, u.full_name, o.acronym AS org_acronym
+             FROM audit_events ae
+             LEFT JOIN users u ON u.id = ae.user_id
+             LEFT JOIN organizations o ON o.id = ae.organization_id
+             ORDER BY ae.created_at DESC
+             LIMIT ?",
+            [$limit]
+        );
+    }
+
+    jsonSuccess($events);
+}
+
+// ============================================================================
+// Handler: Get Variable Catalog
+// ============================================================================
+function handleGetVariableCatalog(): void {
+    $catalog = Database::fetchAll(
+        "SELECT id, name, placeholder, description, default_value, category, is_required, display_order
+         FROM variable_definitions
+         ORDER BY display_order, name"
+    );
+
+    jsonSuccess($catalog);
+}
+
+// ============================================================================
+// Handler: Generate Bundle (POST /api/?action=generate-bundle)
+// ============================================================================
+function handleGenerateBundle(array $input): void {
+    $orgId = (int) ($input['organization_id'] ?? 0);
+    $scriptIds = $input['script_ids'] ?? [];
+
+    if (!$orgId || empty($scriptIds)) {
+        jsonError('organization_id e script_ids são obrigatórios', 400);
+    }
+
+    // Permission check: operador can only generate for their own org
+    $userOrgId = getUserOrgId();
+    if ($userOrgId !== null && $userOrgId !== $orgId) {
+        jsonError('Sem permissão para esta organização', 403);
+    }
+
+    // Verify org exists
+    $org = Database::fetchOne("SELECT * FROM organizations WHERE id = ? AND is_active = TRUE", [$orgId]);
+    if (!$org) {
+        jsonError('Organização não encontrada', 404);
+    }
+
+    // Check required variables
+    $missingRequired = Database::fetchAll(
+        "SELECT vd.name FROM variable_definitions vd
+         WHERE vd.is_required = TRUE
+         AND NOT EXISTS (
+             SELECT 1 FROM organization_variables ov
+             WHERE ov.organization_id = ? AND ov.variable_id = vd.id
+             AND ov.value IS NOT NULL AND ov.value != ''
+         )
+         AND vd.default_value IS NULL",
+        [$orgId]
+    );
+
+    if (!empty($missingRequired)) {
+        $missingNames = array_map(fn($v) => $v['name'], $missingRequired);
+        jsonError('Variáveis obrigatórias não preenchidas: ' . implode(', ', $missingNames), 400, $missingNames);
+    }
+
+    // Load scripts
+    $idList = array_map('intval', $scriptIds);
+    $placeholders = implode(',', array_fill(0, count($idList), '?'));
+
+    $scripts = Database::fetchAll(
+        "SELECT * FROM scripts WHERE id IN ($placeholders) AND is_active = TRUE ORDER BY is_core DESC, execution_order, name",
+        $idList
+    );
+
+    if (empty($scripts)) {
+        jsonError('Nenhum script válido selecionado', 400);
+    }
+
+    // Process each script: substitute placeholders
+    $bundleContent = "#!/bin/bash\n";
+    $bundleContent .= "# ============================================================================\n";
+    $bundleContent .= "# SeederLinux Lite - Provisionamento Automatizado\n";
+    $bundleContent .= "# Organização: " . $org['name'] . " (" . $org['acronym'] . ")\n";
+    $bundleContent .= "# Domínio: " . ($org['domain'] ?? 'N/A') . "\n";
+    $bundleContent .= "# Gerado em: " . date('Y-m-d H:i:s') . "\n";
+    $bundleContent .= "# Scripts: " . count($scripts) . "\n";
+    $bundleContent .= "# ============================================================================\n\n";
+
+    $allWarnings = [];
+
+    foreach ($scripts as $script) {
+        $result = substituir_placeholders($script['content'], $orgId);
+        $bundleContent .= $result['content'] . "\n\n";
+        if (!empty($result['warnings'])) {
+            $allWarnings = array_merge($allWarnings, $result['warnings']);
+        }
+    }
+
+    // Save to deploy_bundles
+    $filename = "provision-" . strtolower($org['acronym']) . ".sh";
+    $scriptIdsStr = implode(',', $idList);
+
+    Database::execute(
+        "INSERT INTO deploy_bundles (organization_id, user_id, filename, content, script_ids, scripts_count)
+         VALUES (?, ?, ?, ?, ?, ?)",
+        [$orgId, $_SESSION['user_id'] ?? null, $filename, $bundleContent, $scriptIdsStr, count($scripts)]
+    );
+
+    $bundleId = (int) Database::lastInsertId();
+
+    // Log audit event
+    logAuditEvent($orgId, 'bundle', 'generate', $bundleId, ['scripts' => count($scripts), 'filename' => $filename]);
+
+    jsonSuccess([
+        'bundle_id' => $bundleId,
+        'download_url' => "/api/?action=bundle-by-id&id={$bundleId}",
+        'filename' => $filename,
+        'scripts_count' => count($scripts),
+        'warnings' => $allWarnings,
+    ], 'Bundle gerado com sucesso');
+}
+
+// ============================================================================
+// Handler: Download Bundle by ID
+// ============================================================================
+function handleDownloadBundleById(int $bundleId): void {
+    $userOrgId = getUserOrgId();
+
+    $query = "SELECT * FROM deploy_bundles WHERE id = ?";
+    $params = [$bundleId];
+
+    if ($userOrgId !== null) {
+        $query .= " AND organization_id = ?";
+        $params[] = $userOrgId;
+    }
+
+    $bundle = Database::fetchOne($query, $params);
+    if (!$bundle) {
+        jsonError('Bundle não encontrado', 404);
+    }
+
+    $filename = $bundle['filename'];
+    header('Content-Type: application/octet-stream');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Content-Length: ' . strlen($bundle['content']));
+    echo $bundle['content'];
+    exit;
+}
+
+// ============================================================================
+// Handler: Get Users
+// ============================================================================
+function handleGetUsers(): void {
+    $users = Database::fetchAll(
+        "SELECT u.id, u.username, u.email, u.full_name, u.role, u.is_active, u.organization_id,
+                o.acronym AS org_acronym, u.created_at
+         FROM users u
+         LEFT JOIN organizations o ON o.id = u.organization_id
+         ORDER BY u.id"
+    );
+
+    jsonSuccess($users);
+}
+
+// ============================================================================
+// Handler: Create User
+// ============================================================================
+function handleCreateUser(array $input): void {
+    $username = sanitizeInput($input['username'] ?? '');
+    $password = $input['password'] ?? '';
+    $email = sanitizeInput($input['email'] ?? '');
+    $fullName = sanitizeInput($input['full_name'] ?? '');
+    $role = sanitizeInput($input['role'] ?? 'operador_om');
+    $orgId = !empty($input['organization_id']) ? (int) $input['organization_id'] : null;
+
+    if (!$username || !$password) {
+        jsonError('Username e password são obrigatórios', 400);
+    }
+
+    $existing = Database::fetchOne("SELECT id FROM users WHERE username = ?", [$username]);
+    if ($existing) {
+        jsonError('Username já existe', 400);
+    }
+
+    $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+
+    Database::execute(
+        "INSERT INTO users (username, password_hash, email, full_name, role, organization_id, is_active)
+         VALUES (?, ?, ?, ?, ?, ?, TRUE)",
+        [$username, $hash, $email, $fullName, $role, $orgId]
+    );
+
+    $userId = (int) Database::lastInsertId();
+    logAuditEvent($orgId, 'user', 'create', $userId, ['username' => $username, 'role' => $role]);
+
+    jsonSuccess(['id' => $userId], 'Usuário criado com sucesso');
+}
+
+// ============================================================================
+// Handler: Update User
+// ============================================================================
+function handleUpdateUser(int $userId, array $input): void {
+    $email = sanitizeInput($input['email'] ?? '');
+    $fullName = sanitizeInput($input['full_name'] ?? '');
+    $role = sanitizeInput($input['role'] ?? null);
+    $orgId = !empty($input['organization_id']) ? (int) $input['organization_id'] : null;
+    $isActive = isset($input['is_active']) ? (bool) $input['is_active'] : null;
+    $password = $input['password'] ?? '';
+
+    $updates = [];
+    $params = [];
+
+    if ($email) { $updates[] = 'email = ?'; $params[] = $email; }
+    if ($fullName) { $updates[] = 'full_name = ?'; $params[] = $fullName; }
+    if ($role) { $updates[] = 'role = ?'; $params[] = $role; }
+    if ($orgId !== null) { $updates[] = 'organization_id = ?'; $params[] = $orgId; }
+    if ($isActive !== null) { $updates[] = 'is_active = ?'; $params[] = $isActive; }
+    if ($password) {
+        $updates[] = 'password_hash = ?';
+        $params[] = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+    }
+
+    if (empty($updates)) {
+        jsonError('Nada para atualizar', 400);
+    }
+
+    $updates[] = 'updated_at = CURRENT_TIMESTAMP';
+    $params[] = $userId;
+
+    Database::execute(
+        "UPDATE users SET " . implode(', ', $updates) . " WHERE id = ?",
+        $params
+    );
+
+    logAuditEvent($orgId, 'user', 'update', $userId, ['role' => $role]);
+
+    jsonSuccess(null, 'Usuário atualizado com sucesso');
+}
+
+// ============================================================================
+// Handler: Delete User
+// ============================================================================
+function handleDeleteUser(int $userId): void {
+    $user = Database::fetchOne("SELECT id FROM users WHERE id = ?", [$userId]);
+    if (!$user) {
+        jsonError('Usuário não encontrado', 404);
+    }
+
+    Database::execute("DELETE FROM users WHERE id = ?", [$userId]);
+    logAuditEvent(null, 'user', 'delete', $userId, null);
+
+    jsonSuccess(null, 'Usuário excluído com sucesso');
+}
+
+// ============================================================================
+// Helper: Log Audit Event
+// ============================================================================
+function logAuditEvent(?int $orgId, string $entity, string $action, ?int $entityId, ?array $details): void {
+    try {
+        Database::execute(
+            "INSERT INTO audit_events (organization_id, user_id, entity, entity_id, action, details, ip_address)
+             VALUES (?, ?, ?, ?, ?, ?::jsonb, ?)",
+            [
+                $orgId,
+                $_SESSION['user_id'] ?? null,
+                $entity,
+                $entityId,
+                $action,
+                $details ? json_encode($details) : null,
+                $_SERVER['REMOTE_ADDR'] ?? null
+            ]
+        );
+    } catch (Exception $e) {
+        error_log('Failed to log audit event: ' . $e->getMessage());
+    }
 }

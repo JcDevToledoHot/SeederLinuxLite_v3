@@ -537,6 +537,55 @@ function replacePlaceholders(string $content, array $variables): string {
 }
 
 /**
+ * substituir_placeholders - Replace {{VARIAVEL}} placeholders in script content
+ * with values from the organization's variables.
+ *
+ * If a variable is not found, the placeholder is kept and a warning is logged.
+ *
+ * @param string $conteudo Script content with {{PLACEHOLDER}} tokens
+ * @param int $orgId Organization ID to look up variable values for
+ * @return array ['content' => string, 'warnings' => array]
+ */
+function substituir_placeholders(string $conteudo, int $orgId): array {
+    $org = Database::fetchOne(
+        "SELECT acronym, name, domain FROM organizations WHERE id = ?",
+        [$orgId]
+    );
+    if (!$org) {
+        throw new RuntimeException('Organização não encontrada');
+    }
+
+    $vars = Database::fetchAll(
+        "SELECT vd.name, COALESCE(ov.value, vd.default_value) AS value
+         FROM variable_definitions vd
+         LEFT JOIN organization_variables ov ON ov.organization_id = ? AND ov.variable_id = vd.id",
+        [$orgId]
+    );
+
+    $varMap = [];
+    foreach ($vars as $v) {
+        $varMap[$v['name']] = $v['value'] ?? '';
+    }
+    $varMap['OM_ACRONYM'] = $org['acronym'];
+    $varMap['OM_NAME'] = $org['name'];
+    $varMap['OM_DOMAIN'] = $org['domain'] ?? '';
+
+    $placeholders = extractPlaceholders($conteudo);
+    $warnings = [];
+    $result = $conteudo;
+
+    foreach ($placeholders as $name) {
+        if (array_key_exists($name, $varMap)) {
+            $result = str_replace('{{' . $name . '}}', $varMap[$name], $result);
+        } else {
+            $warnings[] = "Variável não definida: $name (placeholder mantido)";
+        }
+    }
+
+    return ['content' => $result, 'warnings' => $warnings];
+}
+
+/**
  * Extract placeholders from content
  */
 function extractPlaceholders(string $content): array {
