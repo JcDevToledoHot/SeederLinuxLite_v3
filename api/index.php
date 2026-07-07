@@ -271,6 +271,42 @@ try {
             }
             break;
 
+        // ===============================
+        // Station Check-in Endpoint (token auth, no session)
+        // ===============================
+        case 'checkin':
+            if ($method !== 'POST') {
+                jsonError('Method not allowed', 405);
+            }
+            handleStationCheckin($input);
+            break;
+
+        // ===============================
+        // Stations Endpoints (session auth)
+        // ===============================
+        case 'stations':
+            requireAuth();
+            if ($method === 'GET') {
+                handleGetStations();
+            } else {
+                jsonError('Method not allowed', 405);
+            }
+            break;
+
+        case 'station':
+            requireAuth();
+            if (!$id) {
+                jsonError('Station ID required', 400);
+            }
+            if ($method === 'GET') {
+                handleGetStation((int) $id);
+            } elseif ($method === 'DELETE') {
+                handleDeleteStation((int) $id);
+            } else {
+                jsonError('Method not allowed', 405);
+            }
+            break;
+
         default:
             jsonError('Invalid endpoint', 404);
     }
@@ -446,6 +482,7 @@ function handleCreateOrganization(array $input): void {
         // Log organization creation
         logActivity($_SESSION['user_id'] ?? null, 'create', 'organization', $orgId, "Created organization '$acronym' - '$name'");
         logAuditEvent($orgId, 'organization', 'create', $orgId, ['acronym' => $acronym, 'name' => $name]);
+        log_event("Organization created: acronym=$acronym, name=$name, org_id=$orgId", 'INFO');
 
         jsonSuccess(['id' => $orgId], 'Organização criada com sucesso');
     } catch (Exception $e) {
@@ -677,6 +714,9 @@ function handleUpdateVariables(array $input): void {
 
         // Log variables update
         logActivity($_SESSION['user_id'] ?? null, 'update', 'variables', $orgId, "Updated " . count($variables) . " variables for organization '{$org['acronym']}'", $orgId);
+        logAuditEvent($orgId, 'variable', 'update', null, ['count' => count($variables)]);
+        bumpOrgSerial($orgId);
+        log_event("Variables updated for org_id=$orgId, count=" . count($variables), 'INFO');
 
         jsonResponse([
             'success' => true,
@@ -1205,12 +1245,37 @@ function handleGetDashboard(): void {
             "SELECT COUNT(*) AS c FROM deploy_bundles WHERE organization_id = ? AND generated_at >= date_trunc('month', CURRENT_TIMESTAMP)",
             [$userOrgId]
         )['c'];
+        $stationsOnline = (int) Database::fetchOne(
+            "SELECT COUNT(*) AS c FROM stations WHERE organization_id = ? AND status = 'online'",
+            [$userOrgId]
+        )['c'];
+        $stationsOutdated = (int) Database::fetchOne(
+            "SELECT COUNT(*) AS c FROM stations s JOIN organizations o ON o.id = s.organization_id WHERE s.organization_id = ? AND s.configuration_serial < o.serial_config",
+            [$userOrgId]
+        )['c'];
+        $recentStations = Database::fetchAll(
+            "SELECT s.id, s.hostname, s.ip_address, s.last_checkin, s.status, s.configuration_serial, o.serial_config
+             FROM stations s JOIN organizations o ON o.id = s.organization_id
+             WHERE s.organization_id = ? AND s.last_checkin IS NOT NULL
+             ORDER BY s.last_checkin DESC LIMIT 5",
+            [$userOrgId]
+        );
     } else {
         // admin_gap/auditor: all orgs
         $orgCount = (int) Database::fetchOne("SELECT COUNT(*) AS c FROM organizations WHERE is_active = TRUE")['c'];
         $varCount = (int) Database::fetchOne("SELECT COUNT(*) AS c FROM organization_variables")['c'];
         $scriptCount = (int) Database::fetchOne("SELECT COUNT(*) AS c FROM scripts WHERE is_active = TRUE")['c'];
         $bundleCount = (int) Database::fetchOne("SELECT COUNT(*) AS c FROM deploy_bundles WHERE generated_at >= date_trunc('month', CURRENT_TIMESTAMP)")['c'];
+        $stationsOnline = (int) Database::fetchOne("SELECT COUNT(*) AS c FROM stations WHERE status = 'online'")['c'];
+        $stationsOutdated = (int) Database::fetchOne(
+            "SELECT COUNT(*) AS c FROM stations s JOIN organizations o ON o.id = s.organization_id WHERE s.configuration_serial < o.serial_config"
+        )['c'];
+        $recentStations = Database::fetchAll(
+            "SELECT s.id, s.hostname, s.ip_address, s.last_checkin, s.status, s.configuration_serial, o.serial_config, o.acronym AS org_acronym
+             FROM stations s JOIN organizations o ON o.id = s.organization_id
+             WHERE s.last_checkin IS NOT NULL
+             ORDER BY s.last_checkin DESC LIMIT 5"
+        );
     }
 
     jsonSuccess([
@@ -1218,6 +1283,9 @@ function handleGetDashboard(): void {
         'variables' => $varCount,
         'scripts' => $scriptCount,
         'bundles_this_month' => $bundleCount,
+        'stations_online' => $stationsOnline,
+        'stations_outdated' => $stationsOutdated,
+        'recent_stations' => $recentStations,
     ]);
 }
 
@@ -1291,35 +1359,50 @@ function handleGenerateBundle(array $input): void {
         jsonError('Organização não encontrada', 404);
     }
 
-    // Check required variables
-    $missingRequired = Database::fetchAll(
-        "SELECT vd.name FROM variable_definitions vd
-         WHERE vd.is_required = TRUE
-         AND NOT EXISTS (
-             SELECT 1 FROM organization_variables ov
-             WHERE ov.organization_id = ? AND ov.variable_id = vd.id
-             AND ov.value IS NOT NULL AND ov.value != ''
-         )
-         AND vd.default_value IS NULL",
-        [$orgId]
-    );
-
-    if (!empty($missingRequired)) {
-        $missingNames = array_map(fn($v) => $v['name'], $missingRequired);
-        jsonError('Variáveis obrigatórias não preenchidas: ' . implode(', ', $missingNames), 400, $missingNames);
-    }
-
-    // Load scripts
+    // Load scripts first (needed to determine which placeholders are used)
     $idList = array_map('intval', $scriptIds);
-    $placeholders = implode(',', array_fill(0, count($idList), '?'));
+    $phList = implode(',', array_fill(0, count($idList), '?'));
 
     $scripts = Database::fetchAll(
-        "SELECT * FROM scripts WHERE id IN ($placeholders) AND is_active = TRUE ORDER BY is_core DESC, execution_order, name",
+        "SELECT * FROM scripts WHERE id IN ($phList) AND is_active = TRUE ORDER BY is_core DESC, execution_order, name",
         $idList
     );
 
     if (empty($scripts)) {
         jsonError('Nenhum script válido selecionado', 400);
+    }
+
+    // Extract all placeholders used in the selected scripts
+    $usedPlaceholders = [];
+    foreach ($scripts as $script) {
+        preg_match_all('/\{\{([A-Z_][A-Z0-9_]*)\}\}/', $script['content'], $matches);
+        foreach ($matches[1] as $name) {
+            $usedPlaceholders[$name] = true;
+        }
+    }
+
+    // Check only required variables that are actually used in the selected scripts
+    $missingRequired = [];
+    foreach (array_keys($usedPlaceholders) as $varName) {
+        $varDef = Database::fetchOne("SELECT id, is_required, default_value FROM variable_definitions WHERE name = ?", [$varName]);
+        if (!$varDef) continue;
+        if (!$varDef['is_required']) continue;
+
+        // Check if org has a non-empty value
+        $orgVar = Database::fetchOne(
+            "SELECT value FROM organization_variables WHERE organization_id = ? AND variable_id = ?",
+            [$orgId, $varDef['id']]
+        );
+        $hasValue = ($orgVar && $orgVar['value'] !== null && $orgVar['value'] !== '')
+            || ($varDef['default_value'] !== null && $varDef['default_value'] !== '');
+
+        if (!$hasValue) {
+            $missingRequired[] = $varName;
+        }
+    }
+
+    if (!empty($missingRequired)) {
+        jsonError('Variáveis obrigatórias não preenchidas: ' . implode(', ', $missingRequired), 400, $missingRequired);
     }
 
     // Process each script: substitute placeholders
@@ -1356,6 +1439,7 @@ function handleGenerateBundle(array $input): void {
 
     // Log audit event
     logAuditEvent($orgId, 'bundle', 'generate', $bundleId, ['scripts' => count($scripts), 'filename' => $filename]);
+    log_event("Bundle generated: org_id=$orgId, bundle_id=$bundleId, scripts=" . count($scripts), 'INFO');
 
     jsonSuccess([
         'bundle_id' => $bundleId,
@@ -1519,4 +1603,177 @@ function logAuditEvent(?int $orgId, string $entity, string $action, ?int $entity
     } catch (Exception $e) {
         error_log('Failed to log audit event: ' . $e->getMessage());
     }
+}
+
+// ============================================================================
+// Helper: Bump organization serial_config (call when config changes)
+// ============================================================================
+function bumpOrgSerial(int $orgId): void {
+    Database::execute(
+        "UPDATE organizations SET serial_config = serial_config + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+        [$orgId]
+    );
+}
+
+// ============================================================================
+// Handler: Station Check-in (POST /api/?action=checkin)
+// Auth: Bearer token (station token), not session-based
+// ============================================================================
+function handleStationCheckin(array $input): void {
+    log_event('Check-in request received', 'INFO');
+
+    $token = '';
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    if (preg_match('/Bearer\s+(.+)/i', $authHeader, $m)) {
+        $token = trim($m[1]);
+    }
+    $token = $token ?: ($input['token'] ?? '');
+
+    if (!$token) {
+        log_event('Check-in failed: no token provided', 'WARNING');
+        jsonError('Token de estação é obrigatório', 401);
+    }
+
+    $hostname = sanitizeInput($input['hostname'] ?? '');
+    $osName = sanitizeInput($input['os_name'] ?? '');
+    $osVersion = sanitizeInput($input['os_version'] ?? '');
+    $ipAddress = sanitizeInput($input['ip_address'] ?? '');
+    $macAddress = sanitizeInput($input['mac_address'] ?? '');
+    $serialNumber = sanitizeInput($input['serial_number'] ?? '');
+
+    if (!$hostname) {
+        jsonError('hostname é obrigatório', 400);
+    }
+
+    // Find station by token
+    $station = Database::fetchOne("SELECT * FROM stations WHERE token = ?", [$token]);
+
+    if (!$station) {
+        // Auto-register: create new station linked to default org (ID=1)
+        $defaultOrg = Database::fetchOne("SELECT id FROM organizations WHERE is_active = TRUE ORDER BY id LIMIT 1");
+        $orgId = $defaultOrg ? (int) $defaultOrg['id'] : 1;
+
+        Database::execute(
+            "INSERT INTO stations (organization_id, hostname, serial_number, os_name, os_version, ip_address, mac_address, last_checkin, status, configuration_serial, token)
+             VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, 'online', 0, ?)",
+            [$orgId, $hostname, $serialNumber, $osName, $osVersion, $ipAddress, $macAddress, $token]
+        );
+        $stationId = (int) Database::lastInsertId();
+        $station = Database::fetchOne("SELECT * FROM stations WHERE id = ?", [$stationId]);
+        log_event("New station auto-registered: hostname=$hostname, org=$orgId", 'INFO');
+        logAuditEvent($orgId, 'station', 'auto_register', $stationId, ['hostname' => $hostname]);
+    } else {
+        // Update existing station
+        Database::execute(
+            "UPDATE stations SET hostname = ?, os_name = ?, os_version = ?, ip_address = ?, mac_address = ?, serial_number = ?, last_checkin = CURRENT_TIMESTAMP, status = 'online' WHERE id = ?",
+            [$hostname, $osName, $osVersion, $ipAddress, $macAddress, $serialNumber, $station['id']]
+        );
+        log_event("Station check-in: hostname=$hostname, station_id={$station['id']}", 'INFO');
+    }
+
+    $orgId = (int) $station['organization_id'];
+
+    // Compare configuration_serial
+    $org = Database::fetchOne("SELECT serial_config FROM organizations WHERE id = ?", [$orgId]);
+    $orgSerial = $org ? (int) $org['serial_config'] : 0;
+    $stationSerial = (int) $station['configuration_serial'];
+    $updateAvailable = $orgSerial > $stationSerial;
+
+    // Find latest bundle for this org
+    $latestBundleId = null;
+    if ($updateAvailable) {
+        $latestBundle = Database::fetchOne(
+            "SELECT id FROM deploy_bundles WHERE organization_id = ? ORDER BY generated_at DESC LIMIT 1",
+            [$orgId]
+        );
+        $latestBundleId = $latestBundle ? (int) $latestBundle['id'] : null;
+    }
+
+    jsonSuccess([
+        'station_id' => (int) $station['id'],
+        'update_available' => $updateAvailable,
+        'latest_bundle_id' => $latestBundleId,
+        'configuration_serial' => $orgSerial,
+    ], 'Check-in realizado com sucesso');
+}
+
+// ============================================================================
+// Handler: Get Stations (GET /api/?action=stations)
+// ============================================================================
+function handleGetStations(): void {
+    $userOrgId = getUserOrgId();
+    $orgFilter = $userOrgId ?? (isset($_GET['org']) ? (int) $_GET['org'] : null);
+
+    // Update offline status for stations that haven't checked in recently
+    Database::execute(
+        "UPDATE stations SET status = 'offline' WHERE last_checkin IS NOT NULL AND last_checkin < NOW() - INTERVAL '2 hours' AND status = 'online'"
+    );
+
+    if ($orgFilter !== null) {
+        $stations = Database::fetchAll(
+            "SELECT s.*, o.acronym AS org_acronym
+             FROM stations s
+             LEFT JOIN organizations o ON o.id = s.organization_id
+             WHERE s.organization_id = ?
+             ORDER BY s.last_checkin DESC NULLS LAST",
+            [$orgFilter]
+        );
+    } else {
+        $stations = Database::fetchAll(
+            "SELECT s.*, o.acronym AS org_acronym
+             FROM stations s
+             LEFT JOIN organizations o ON o.id = s.organization_id
+             ORDER BY s.last_checkin DESC NULLS LAST"
+        );
+    }
+
+    jsonSuccess($stations);
+}
+
+// ============================================================================
+// Handler: Get Station (GET /api/?action=station&id=N)
+// ============================================================================
+function handleGetStation(int $stationId): void {
+    $userOrgId = getUserOrgId();
+
+    $query = "SELECT s.*, o.acronym AS org_acronym, o.name AS org_name FROM stations s LEFT JOIN organizations o ON o.id = s.organization_id WHERE s.id = ?";
+    $params = [$stationId];
+
+    if ($userOrgId !== null) {
+        $query .= " AND s.organization_id = ?";
+        $params[] = $userOrgId;
+    }
+
+    $station = Database::fetchOne($query, $params);
+    if (!$station) {
+        jsonError('Estação não encontrada', 404);
+    }
+
+    jsonSuccess($station);
+}
+
+// ============================================================================
+// Handler: Delete Station (DELETE /api/?action=station&id=N)
+// ============================================================================
+function handleDeleteStation(int $stationId): void {
+    $userOrgId = getUserOrgId();
+
+    $query = "SELECT id, organization_id FROM stations WHERE id = ?";
+    $params = [$stationId];
+
+    if ($userOrgId !== null) {
+        $query .= " AND organization_id = ?";
+        $params[] = $userOrgId;
+    }
+
+    $station = Database::fetchOne($query, $params);
+    if (!$station) {
+        jsonError('Estação não encontrada', 404);
+    }
+
+    Database::execute("DELETE FROM stations WHERE id = ?", [$stationId]);
+    logAuditEvent($station['organization_id'], 'station', 'delete', $stationId, null);
+    log_event("Station deleted: station_id=$stationId", 'INFO');
+
+    jsonSuccess(null, 'Estação excluída com sucesso');
 }

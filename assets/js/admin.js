@@ -135,6 +135,9 @@ async function loadDashboard() {
             document.getElementById('dash-scripts').textContent = stats.data.scripts;
             document.getElementById('dash-vars').textContent = stats.data.variables;
             document.getElementById('dash-bundles').textContent = stats.data.bundles_this_month;
+            document.getElementById('dash-stations-online').textContent = stats.data.stations_online ?? 0;
+            document.getElementById('dash-stations-outdated').textContent = stats.data.stations_outdated ?? 0;
+            renderRecentStations(stats.data.recent_stations ?? []);
         }
 
         if (orgs.success) {
@@ -149,6 +152,38 @@ async function loadDashboard() {
         console.error('Dashboard error:', error);
         Toast.error('Erro ao carregar dashboard');
     }
+}
+
+function renderRecentStations(stations) {
+    const el = document.getElementById('dash-stations-table');
+    if (!stations || !stations.length) {
+        el.innerHTML = '<div class="p-6 text-slate-400 text-center text-sm">Nenhuma estação registrou check-in ainda.</div>';
+        return;
+    }
+    const statusColors = { 'online': 'bg-emerald-500/20 text-emerald-400', 'offline': 'bg-slate-700 text-slate-400', 'delayed': 'bg-amber-500/20 text-amber-400', 'never_connected': 'bg-slate-700 text-slate-500' };
+    el.innerHTML = `
+        <table class="w-full">
+            <thead class="bg-slate-900/50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Hostname</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">IP</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Último Check-in</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">OM</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-700">
+                ${stations.map(s => `
+                    <tr>
+                        <td class="px-6 py-4 text-sm text-white font-medium">${Utils.escapeHtml(s.hostname || '-')}</td>
+                        <td class="px-6 py-4 text-sm text-slate-300">${Utils.escapeHtml(s.ip_address || '-')}</td>
+                        <td class="px-6 py-4 text-sm text-slate-300">${Utils.formatDate(s.last_checkin)}</td>
+                        <td class="px-6 py-4"><span class="px-2 py-1 text-xs rounded ${statusColors[s.status] || statusColors['never_connected']}">${s.status || 'unknown'}</span></td>
+                        <td class="px-6 py-4 text-sm text-slate-300">${Utils.escapeHtml(s.org_acronym || '-')}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>`;
 }
 
 function renderRecentOrgs() {
@@ -239,6 +274,7 @@ async function selectOrganization(orgId) {
     await loadVariables(orgId);
     await loadScriptsForBundle(orgId);
     await loadOrgScripts(orgId);
+    loadSettingsFromVariables();
 }
 window.selectOrganization = selectOrganization;
 
@@ -730,14 +766,66 @@ async function updateOrganization() {
 
     if (!name) { Toast.error('Nome é obrigatório'); return; }
 
+    // Collect settings tab variable values
+    const settingsVars = {};
+    document.querySelectorAll('#tab-settings input[data-var], #tab-settings select[data-var], #tab-settings textarea[data-var]').forEach(el => {
+        settingsVars[el.dataset.var] = el.value;
+    });
+
     try {
+        // 1. Update basic org info
         const data = await API.put('organization', currentOrgId, { name, domain, description });
-        if (data.success) {
-            Toast.success('Organização atualizada');
-            await loadDashboard();
-            await loadOrganizations();
-        } else { Toast.error(data.error || 'Erro ao atualizar'); }
+        if (!data.success) { Toast.error(data.error || 'Erro ao atualizar'); return; }
+
+        // 2. Update settings variables (branding, proxy, repos)
+        const varUpdates = {};
+        allVariables.forEach(v => {
+            if (settingsVars[v.name] !== undefined) {
+                varUpdates[v.id] = settingsVars[v.name];
+            }
+        });
+        // For variables in settings that don't exist yet in allVariables, create them
+        const existingVarNames = new Set(allVariables.map(v => v.name));
+        const newVars = [];
+        for (const [name, value] of Object.entries(settingsVars)) {
+            if (!existingVarNames.has(name)) {
+                newVars.push({ name, value });
+            }
+        }
+
+        if (Object.keys(varUpdates).length > 0) {
+            const varResponse = await API.post('variables-update', { organization_id: currentOrgId, variables: varUpdates });
+            if (!varResponse.success) { Toast.error('Org atualizada, mas erro ao salvar variáveis'); }
+        }
+
+        // Create new variables that don't exist yet
+        for (const nv of newVars) {
+            if (nv.value) {
+                try {
+                    await API.post('variables', { organization_id: currentOrgId, name: nv.name, value: nv.value });
+                } catch (e) { console.error('Failed to create variable', nv.name, e); }
+            }
+        }
+
+        Toast.success('Configurações salvas com sucesso');
+        await loadDashboard();
+        await loadOrganizations();
+        await loadVariables(currentOrgId);
     } catch (error) { Toast.error('Erro ao atualizar organização'); }
+}
+
+// Load settings tab field values from the loaded variables
+function loadSettingsFromVariables() {
+    if (!allVariables.length) return;
+    const varMap = {};
+    allVariables.forEach(v => { varMap[v.name] = v.current_value || v.default_value || ''; });
+
+    document.querySelectorAll('#tab-settings input[data-var], #tab-settings select[data-var], #tab-settings textarea[data-var]').forEach(el => {
+        const varName = el.dataset.var;
+        if (varMap[varName] !== undefined) {
+            el.value = varMap[varName];
+        }
+    });
 }
 
 async function deleteOrganization() {

@@ -586,6 +586,22 @@ function substituir_placeholders(string $conteudo, int $orgId): array {
 }
 
 /**
+ * Log event to file system log
+ * Writes to storage/logs/system.log with timestamp and level
+ */
+function log_event(string $message, string $level = 'INFO'): void {
+    $logDir = __DIR__ . '/../storage/logs';
+    if (!is_dir($logDir)) {
+        @mkdir($logDir, 0750, true);
+    }
+    $logFile = $logDir . '/system.log';
+    $timestamp = date('Y-m-d H:i:s');
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'cli';
+    $line = "[$timestamp] [$level] [IP:$ip] $message" . PHP_EOL;
+    @file_put_contents($logFile, $line, FILE_APPEND | LOCK_EX);
+}
+
+/**
  * Extract placeholders from content
  */
 function extractPlaceholders(string $content): array {

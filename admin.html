@@ -16,9 +16,7 @@
             <div class="p-4 border-b border-slate-700">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/>
-                        </svg>
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/></svg>
                     </div>
                     <div>
                         <span class="text-lg font-bold text-white">SeederLinux</span>
@@ -26,9 +24,7 @@
                     </div>
                 </div>
             </div>
-
             <div class="flex-1 overflow-y-auto p-3">
-                <!-- Navigation -->
                 <div class="mb-4">
                     <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Navegação</span>
                     <nav class="space-y-1 mt-2">
@@ -50,8 +46,6 @@
                         </button>
                     </nav>
                 </div>
-
-                <!-- Organizations -->
                 <div id="orgs-section">
                     <div class="flex items-center justify-between mb-3">
                         <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Organizações</span>
@@ -62,14 +56,10 @@
                     <nav id="om-list" class="space-y-1"></nav>
                 </div>
             </div>
-
-            <!-- User Menu -->
             <div class="p-4 border-t border-slate-700">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                            <span id="user-initial">A</span>
-                        </div>
+                        <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm"><span id="user-initial">A</span></div>
                         <div>
                             <div class="text-sm font-medium text-white" id="user-name">Admin</div>
                             <div class="text-xs text-slate-400" id="user-role">Administrador</div>
@@ -100,72 +90,84 @@
             <div class="p-6" id="content-area">
                 <!-- ==================== DASHBOARD VIEW ==================== -->
                 <div id="view-dashboard">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                        <div class="bg-slate-800 rounded-xl p-6 border border-slate-700">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                                    <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                                </div>
-                                <span class="text-slate-500 text-sm">Total</span>
+                    <!-- Row 1: main stats -->
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+                        <div class="bg-slate-800 rounded-xl p-5 border border-slate-700">
+                            <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center mb-3">
+                                <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                             </div>
-                            <div class="text-3xl font-bold text-white" id="dash-orgs">-</div>
-                            <div class="text-slate-400 text-sm">Organizações</div>
+                            <div class="text-2xl font-bold text-white" id="dash-orgs">-</div>
+                            <div class="text-slate-400 text-xs mt-1">Organizações</div>
                         </div>
-                        <div class="bg-slate-800 rounded-xl p-6 border border-slate-700">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="w-12 h-12 bg-emerald-500/20 rounded-lg flex items-center justify-center">
-                                    <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                </div>
-                                <span class="text-slate-500 text-sm">Total</span>
+                        <div class="bg-slate-800 rounded-xl p-5 border border-slate-700">
+                            <div class="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center mb-3">
+                                <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                             </div>
-                            <div class="text-3xl font-bold text-white" id="dash-scripts">-</div>
-                            <div class="text-slate-400 text-sm">Scripts</div>
+                            <div class="text-2xl font-bold text-white" id="dash-scripts">-</div>
+                            <div class="text-slate-400 text-xs mt-1">Scripts</div>
                         </div>
-                        <div class="bg-slate-800 rounded-xl p-6 border border-slate-700">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="w-12 h-12 bg-amber-500/20 rounded-lg flex items-center justify-center">
-                                    <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                </div>
-                                <span class="text-slate-500 text-sm">Config</span>
+                        <div class="bg-slate-800 rounded-xl p-5 border border-slate-700">
+                            <div class="w-10 h-10 bg-amber-500/20 rounded-lg flex items-center justify-center mb-3">
+                                <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                             </div>
-                            <div class="text-3xl font-bold text-white" id="dash-vars">-</div>
-                            <div class="text-slate-400 text-sm">Variáveis</div>
+                            <div class="text-2xl font-bold text-white" id="dash-vars">-</div>
+                            <div class="text-slate-400 text-xs mt-1">Variáveis</div>
                         </div>
-                        <div class="bg-slate-800 rounded-xl p-6 border border-slate-700">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="w-12 h-12 bg-rose-500/20 rounded-lg flex items-center justify-center">
-                                    <svg class="w-6 h-6 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-                                </div>
-                                <span class="text-slate-500 text-sm">Mês</span>
+                        <div class="bg-slate-800 rounded-xl p-5 border border-slate-700">
+                            <div class="w-10 h-10 bg-rose-500/20 rounded-lg flex items-center justify-center mb-3">
+                                <svg class="w-5 h-5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
                             </div>
-                            <div class="text-3xl font-bold text-white" id="dash-bundles">-</div>
-                            <div class="text-slate-400 text-sm">Bundles Gerados</div>
+                            <div class="text-2xl font-bold text-white" id="dash-bundles">-</div>
+                            <div class="text-slate-400 text-xs mt-1">Bundles/Mês</div>
+                        </div>
+                        <div class="bg-slate-800 rounded-xl p-5 border border-slate-700">
+                            <div class="w-10 h-10 bg-teal-500/20 rounded-lg flex items-center justify-center mb-3">
+                                <svg class="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            </div>
+                            <div class="text-2xl font-bold text-white" id="dash-stations-online">-</div>
+                            <div class="text-slate-400 text-xs mt-1">Estações Online</div>
+                        </div>
+                        <div class="bg-slate-800 rounded-xl p-5 border border-slate-700">
+                            <div class="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center mb-3">
+                                <svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            </div>
+                            <div class="text-2xl font-bold text-white" id="dash-stations-outdated">-</div>
+                            <div class="text-slate-400 text-xs mt-1">Desatualizadas</div>
                         </div>
                     </div>
 
-                    <div class="grid lg:grid-cols-2 gap-6">
-                        <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-                            <div class="px-6 py-4 border-b border-slate-700"><h3 class="font-semibold text-white">Organizações Cadastradas</h3></div>
-                            <div class="p-6" id="recent-orgs"></div>
+                    <!-- Row 2: recent stations + orgs/scripts -->
+                    <div class="grid lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+                            <div class="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
+                                <h3 class="font-semibold text-white">Últimas Estações com Check-in</h3>
+                            </div>
+                            <div id="dash-stations-table">
+                                <div class="p-6 text-slate-400 text-center text-sm">Nenhuma estação registrou check-in ainda.</div>
+                            </div>
                         </div>
-                        <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-                            <div class="px-6 py-4 border-b border-slate-700"><h3 class="font-semibold text-white">Scripts Disponíveis</h3></div>
-                            <div class="p-6" id="recent-scripts"></div>
+                        <div class="space-y-4">
+                            <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+                                <div class="px-6 py-4 border-b border-slate-700"><h3 class="font-semibold text-white">Organizações</h3></div>
+                                <div class="p-4" id="recent-orgs"></div>
+                            </div>
+                            <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+                                <div class="px-6 py-4 border-b border-slate-700"><h3 class="font-semibold text-white">Scripts</h3></div>
+                                <div class="p-4" id="recent-scripts"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- ==================== OM DETAIL VIEW ==================== -->
                 <div id="view-om-detail" class="hidden">
-                    <div class="mb-6">
-                        <div class="flex items-center gap-4 mb-4">
-                            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-xl flex items-center justify-center">
-                                <span class="text-2xl font-bold text-white" id="om-acronym-badge">OM</span>
-                            </div>
-                            <div>
-                                <h2 class="text-2xl font-bold text-white" id="om-display-name">Nome da OM</h2>
-                                <p class="text-slate-400" id="om-display-domain">dominio.intraer</p>
-                            </div>
+                    <div class="mb-6 flex items-center gap-4">
+                        <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-xl flex items-center justify-center">
+                            <span class="text-2xl font-bold text-white" id="om-acronym-badge">OM</span>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold text-white" id="om-display-name">Nome da OM</h2>
+                            <p class="text-slate-400" id="om-display-domain">dominio.intraer</p>
                         </div>
                     </div>
 
@@ -181,15 +183,15 @@
                     <!-- Tab: Variables -->
                     <div id="tab-variables" class="tab-content">
                         <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-                            <div class="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
+                            <div class="px-6 py-4 border-b border-slate-700 flex flex-wrap items-center gap-3 justify-between">
                                 <h3 class="font-semibold text-white">Variáveis de Configuração</h3>
-                                <div class="flex items-center gap-3">
-                                    <input type="text" id="var-search" placeholder="Buscar..." class="px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white w-40" oninput="filterVariables()">
+                                <div class="flex items-center gap-3 flex-wrap">
+                                    <input type="text" id="var-search" placeholder="Buscar..." class="px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white w-36" oninput="filterVariables()">
                                     <select id="var-category-filter" class="px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white" onchange="filterVariables()">
                                         <option value="">Todas categorias</option>
                                     </select>
                                     <button id="btn-add-variable" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium text-white transition-colors">+ Variável</button>
-                                    <button id="btn-save-vars" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-medium text-white transition-colors">Salvar Variáveis</button>
+                                    <button id="btn-save-vars" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-medium text-white transition-colors">Salvar</button>
                                 </div>
                             </div>
                             <form id="vars-form" class="p-6">
@@ -215,18 +217,12 @@
                     <!-- Tab: Bundle -->
                     <div id="tab-bundle" class="tab-content hidden">
                         <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-                            <div class="px-6 py-4 border-b border-slate-700">
-                                <h3 class="font-semibold text-white">Gerar e Baixar Bundle</h3>
-                            </div>
+                            <div class="px-6 py-4 border-b border-slate-700"><h3 class="font-semibold text-white">Gerar e Baixar Bundle</h3></div>
                             <div class="p-6">
-                                <div class="mb-6">
-                                    <h4 class="text-white font-medium mb-4">Selecione os scripts para incluir:</h4>
-                                    <div id="bundle-scripts-list" class="space-y-2"></div>
-                                </div>
+                                <h4 class="text-white font-medium mb-4">Selecione os scripts para incluir:</h4>
+                                <div id="bundle-scripts-list" class="space-y-2 mb-6"></div>
                                 <div class="flex items-center gap-4 pt-4 border-t border-slate-700">
-                                    <button id="btn-generate-bundle" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 rounded-lg font-semibold text-white transition-all">
-                                        Gerar Bundle
-                                    </button>
+                                    <button id="btn-generate-bundle" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 rounded-lg font-semibold text-white transition-all">Gerar Bundle</button>
                                     <a id="download-link" href="#" class="hidden px-6 py-3 bg-slate-700 hover:bg-slate-600 rounded-lg font-semibold text-white transition-all flex items-center gap-2">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                                         Baixar Bundle
@@ -242,19 +238,20 @@
                         </div>
                     </div>
 
-                    <!-- Tab: Settings -->
+                    <!-- Tab: Settings (expanded with branding/policy sections) -->
                     <div id="tab-settings" class="tab-content hidden">
-                        <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-                            <div class="px-6 py-4 border-b border-slate-700"><h3 class="font-semibold text-white">Configurações da OM</h3></div>
-                            <form id="om-settings-form" class="p-6 space-y-6">
-                                <div class="grid md:grid-cols-2 gap-6">
+                        <form id="om-settings-form" class="space-y-6">
+                            <!-- Basic Info -->
+                            <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+                                <div class="px-6 py-4 border-b border-slate-700"><h3 class="font-semibold text-white">Informações Básicas</h3></div>
+                                <div class="p-6 grid md:grid-cols-2 gap-6">
                                     <div>
                                         <label class="block text-sm font-medium text-slate-300 mb-2">Nome Completo</label>
                                         <input type="text" id="edit-om-name" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white">
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-slate-300 mb-2">Sigla</label>
-                                        <input type="text" id="edit-om-acronym" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white bg-opacity-50" readonly>
+                                        <input type="text" id="edit-om-acronym" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white opacity-60 cursor-not-allowed" readonly>
                                         <p class="text-slate-500 text-xs mt-1">A sigla não pode ser alterada</p>
                                     </div>
                                     <div>
@@ -266,12 +263,108 @@
                                         <input type="text" id="edit-om-description" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white">
                                     </div>
                                 </div>
-                                <div class="flex items-center gap-4 pt-4 border-t border-slate-700">
-                                    <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium text-white transition-colors">Salvar Alterações</button>
-                                    <button type="button" id="btn-delete-org" class="px-4 py-2 bg-red-600/20 hover:bg-red-600/40 border border-red-500/30 rounded-lg text-sm font-medium text-red-400 transition-colors hidden">Excluir OM</button>
+                            </div>
+
+                            <!-- Identity / Branding -->
+                            <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+                                <div class="px-6 py-4 border-b border-slate-700">
+                                    <h3 class="font-semibold text-white">Identidade Visual</h3>
+                                    <p class="text-slate-400 text-xs mt-1">Edita as variáveis DISPLAY_NAME, WALLPAPER_URL, LOGO_URL e similares</p>
                                 </div>
-                            </form>
-                        </div>
+                                <div class="p-6 grid md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-300 mb-2">Nome de Exibição</label>
+                                        <input type="text" id="cfg-display-name" data-var="DISPLAY_NAME" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white" placeholder="Ex: Comando da Comara">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-300 mb-2">Tema GTK</label>
+                                        <input type="text" id="cfg-theme" data-var="THEME" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white" placeholder="Ex: Adwaita">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-300 mb-2">URL do Wallpaper</label>
+                                        <input type="text" id="cfg-wallpaper-url" data-var="WALLPAPER_URL" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white" placeholder="https://...">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-300 mb-2">URL do Wallpaper de Login</label>
+                                        <input type="text" id="cfg-wallpaper-login" data-var="WALLPAPER_LOGIN_URL" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white" placeholder="https://...">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-300 mb-2">URL do Logo</label>
+                                        <input type="text" id="cfg-logo-url" data-var="LOGO_URL" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white" placeholder="https://...">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-300 mb-2">Perfil Conky</label>
+                                        <input type="text" id="cfg-conky-profile" data-var="CONKY_PROFILE" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white" placeholder="Ex: default">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Navigation policies -->
+                            <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+                                <div class="px-6 py-4 border-b border-slate-700">
+                                    <h3 class="font-semibold text-white">Políticas de Navegação</h3>
+                                    <p class="text-slate-400 text-xs mt-1">Edita as variáveis HOMEPAGE, PROXY_MODE, PROXY_HTTP, etc.</p>
+                                </div>
+                                <div class="p-6 grid md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-300 mb-2">Página Inicial (Homepage)</label>
+                                        <input type="text" id="cfg-homepage" data-var="HOMEPAGE" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white" placeholder="Ex: www.comara.intraer">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-300 mb-2">Modo de Proxy</label>
+                                        <select id="cfg-proxy-mode" data-var="PROXY_MODE" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white">
+                                            <option value="NONE">Nenhum</option>
+                                            <option value="MANUAL">Manual</option>
+                                            <option value="PAC">PAC (Auto)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-300 mb-2">Proxy HTTP</label>
+                                        <input type="text" id="cfg-proxy-http" data-var="PROXY_HTTP" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white" placeholder="Ex: 10.108.88.4">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-300 mb-2">Porta do Proxy</label>
+                                        <input type="text" id="cfg-proxy-porta" data-var="PROXY_PORTA" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white" placeholder="Ex: 8080">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-300 mb-2">URL PAC</label>
+                                        <input type="text" id="cfg-pac-url" data-var="PAC_URL" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white" placeholder="http://...">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-300 mb-2">Exceções de Proxy (No-Proxy)</label>
+                                        <textarea id="cfg-no-proxy" data-var="NO_PROXY" rows="2" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white resize-none text-sm" placeholder="localhost,127.0.0.1,comara.intraer"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Repositories -->
+                            <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+                                <div class="px-6 py-4 border-b border-slate-700">
+                                    <h3 class="font-semibold text-white">Repositórios</h3>
+                                    <p class="text-slate-400 text-xs mt-1">Edita as variáveis REPOSITORY_MODE e REPOSITORY_URL</p>
+                                </div>
+                                <div class="p-6 grid md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-300 mb-2">Modo de Repositório</label>
+                                        <select id="cfg-repo-mode" data-var="REPOSITORY_MODE" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white">
+                                            <option value="PUBLIC">Público (Internet)</option>
+                                            <option value="MIRROR">Espelho Interno</option>
+                                            <option value="HYBRID">Híbrido</option>
+                                            <option value="CUSTOM">Personalizado</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-300 mb-2">URL do Repositório</label>
+                                        <input type="text" id="cfg-repo-url" data-var="REPOSITORY_URL" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white" placeholder="https://...">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-4">
+                                <button type="submit" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium text-white transition-colors">Salvar Configurações</button>
+                                <button type="button" id="btn-delete-org" class="px-4 py-2 bg-red-600/20 hover:bg-red-600/40 border border-red-500/30 rounded-lg text-sm font-medium text-red-400 transition-colors hidden">Excluir OM</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
 
@@ -314,9 +407,7 @@
                 <!-- ==================== AUDIT VIEW ==================== -->
                 <div id="view-audit" class="hidden">
                     <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-slate-700">
-                            <h3 class="font-semibold text-white">Eventos de Auditoria</h3>
-                        </div>
+                        <div class="px-6 py-4 border-b border-slate-700"><h3 class="font-semibold text-white">Eventos de Auditoria</h3></div>
                         <div class="overflow-x-auto">
                             <table class="w-full">
                                 <thead class="bg-slate-900/50">
@@ -340,14 +431,12 @@
 
     <!-- Modal: New OM -->
     <div id="modal-new-org" class="fixed inset-0 z-50 hidden">
-        <div class="modal-backdrop absolute inset-0" id="modal-backdrop"></div>
+        <div class="modal-backdrop absolute inset-0 bg-black/60"></div>
         <div class="relative flex items-center justify-center min-h-screen p-4">
             <div class="bg-slate-800 rounded-2xl border border-slate-700 w-full max-w-lg relative">
                 <div class="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
                     <h3 class="font-semibold text-white text-lg">Nova Organização</h3>
-                    <button class="modal-close text-slate-400 hover:text-white">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
+                    <button class="modal-close text-slate-400 hover:text-white"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
                 </div>
                 <form id="new-org-form" class="p-6 space-y-4">
                     <div>
@@ -367,24 +456,22 @@
                         <textarea id="new-org-description" rows="2" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white resize-none"></textarea>
                     </div>
                     <div class="flex justify-end gap-3 pt-4">
-                        <button type="button" class="modal-close px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium text-white transition-colors">Cancelar</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium text-white transition-colors">Criar OM</button>
+                        <button type="button" class="modal-close px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium text-white">Cancelar</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium text-white">Criar OM</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Modal: New User -->
+    <!-- Modal: New/Edit User -->
     <div id="modal-new-user" class="fixed inset-0 z-50 hidden">
-        <div class="modal-backdrop absolute inset-0"></div>
+        <div class="modal-backdrop absolute inset-0 bg-black/60"></div>
         <div class="relative flex items-center justify-center min-h-screen p-4">
             <div class="bg-slate-800 rounded-2xl border border-slate-700 w-full max-w-lg relative">
                 <div class="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
                     <h3 class="font-semibold text-white text-lg" id="user-modal-title">Novo Usuário</h3>
-                    <button class="modal-close text-slate-400 hover:text-white">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
+                    <button class="modal-close text-slate-400 hover:text-white"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
                 </div>
                 <form id="user-form" class="p-6 space-y-4">
                     <input type="hidden" id="user-edit-id">
@@ -401,7 +488,7 @@
                         <input type="email" id="user-email" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-2">Senha <span id="user-password-optional" class="text-slate-500 text-xs">(deixe vazio ao editar)</span></label>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Senha <span id="user-password-optional" class="text-slate-500 text-xs"></span></label>
                         <input type="password" id="user-password" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white">
                     </div>
                     <div class="grid grid-cols-2 gap-4">
@@ -421,8 +508,8 @@
                         </div>
                     </div>
                     <div class="flex justify-end gap-3 pt-4">
-                        <button type="button" class="modal-close px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium text-white transition-colors">Cancelar</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium text-white transition-colors">Salvar</button>
+                        <button type="button" class="modal-close px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium text-white">Cancelar</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium text-white">Salvar</button>
                     </div>
                 </form>
             </div>
@@ -431,20 +518,18 @@
 
     <!-- Modal: Upload Script -->
     <div id="modal-upload-script" class="fixed inset-0 z-50 hidden">
-        <div class="modal-backdrop absolute inset-0"></div>
+        <div class="modal-backdrop absolute inset-0 bg-black/60"></div>
         <div class="relative flex items-center justify-center min-h-screen p-4">
             <div class="bg-slate-800 rounded-2xl border border-slate-700 w-full max-w-2xl relative">
                 <div class="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
                     <h3 class="font-semibold text-white text-lg" id="script-modal-title">Upload Script</h3>
-                    <button class="modal-close text-slate-400 hover:text-white">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
+                    <button class="modal-close text-slate-400 hover:text-white"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
                 </div>
                 <form id="script-form" class="p-6 space-y-4">
                     <input type="hidden" id="script-is-core" value="false">
                     <div>
                         <label class="block text-sm font-medium text-slate-300 mb-2">Nome do Script *</label>
-                        <input type="text" id="script-name" required class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white" placeholder="Ex: Configuração de Rede">
+                        <input type="text" id="script-name" required class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-300 mb-2">Descrição</label>
@@ -455,8 +540,8 @@
                         <textarea id="script-content" rows="12" required class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono text-sm" placeholder="#!/bin/bash&#10;echo &quot;Hello {{DOMINIO}}&quot;"></textarea>
                     </div>
                     <div class="flex justify-end gap-3 pt-4">
-                        <button type="button" class="modal-close px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium text-white transition-colors">Cancelar</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium text-white transition-colors">Salvar Script</button>
+                        <button type="button" class="modal-close px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium text-white">Cancelar</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium text-white">Salvar Script</button>
                     </div>
                 </form>
             </div>
@@ -465,14 +550,12 @@
 
     <!-- Modal: Add Variable -->
     <div id="modal-add-variable" class="fixed inset-0 z-50 hidden">
-        <div class="modal-backdrop absolute inset-0"></div>
+        <div class="modal-backdrop absolute inset-0 bg-black/60"></div>
         <div class="relative flex items-center justify-center min-h-screen p-4">
             <div class="bg-slate-800 rounded-2xl border border-slate-700 w-full max-w-lg relative">
                 <div class="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
                     <h3 class="font-semibold text-white text-lg">Adicionar Variável</h3>
-                    <button class="modal-close text-slate-400 hover:text-white">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
+                    <button class="modal-close text-slate-400 hover:text-white"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
                 </div>
                 <form id="add-variable-form" class="p-6 space-y-4">
                     <div>
@@ -494,16 +577,16 @@
                             <label class="block text-sm font-medium text-slate-300 mb-2">Categoria</label>
                             <input type="text" id="var-category" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white" value="general">
                         </div>
-                        <div class="flex items-end">
-                            <label class="flex items-center gap-2 text-sm text-slate-300">
-                                <input type="checkbox" id="var-required" class="w-4 h-4 rounded bg-slate-900 border-slate-700">
+                        <div class="flex items-end pb-2">
+                            <label class="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                                <input type="checkbox" id="var-required" class="w-4 h-4 rounded">
                                 Obrigatória
                             </label>
                         </div>
                     </div>
                     <div class="flex justify-end gap-3 pt-4">
-                        <button type="button" class="modal-close px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium text-white transition-colors">Cancelar</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium text-white transition-colors">Adicionar</button>
+                        <button type="button" class="modal-close px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium text-white">Cancelar</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium text-white">Adicionar</button>
                     </div>
                 </form>
             </div>
