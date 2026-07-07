@@ -6,7 +6,9 @@
 
 declare(strict_types=1);
 
-// Include paths from public folder
+require_once __DIR__ . '/../lib/config.php';
+require_once __DIR__ . '/../lib/db.php';
+require_once __DIR__ . '/../lib/functions.php';
 require_once __DIR__ . '/../includes/auth.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -260,7 +262,7 @@ function handleSessionCheck(): void {
         $user = getCurrentUser();
         jsonSuccess($user, 'Sessão ativa');
     } else {
-        jsonError('Not authenticated', 401);
+        jsonResponse(['success' => false, 'error' => 'Not authenticated'], 200);
     }
 }
 

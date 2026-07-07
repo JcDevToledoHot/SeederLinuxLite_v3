@@ -29,9 +29,9 @@ CREATE TABLE users (
 );
 
 -- Create default admin user (password: admin123)
--- Password hash generated with PASSWORD_BCRYPT (cost=10)
+-- Password hash generated with PASSWORD_BCRYPT (cost=12)
 INSERT INTO users (username, password_hash, email, full_name, role)
-VALUES ('admin', '$2y$10$wz/znChHF7rEKi5vOWF2PukHtqFrbnYlqBkOxJCk8UDC7xGC/oM5W', 'admin@seeder.local', 'Administrator', 'admin');
+VALUES ('admin', '$2y$12$aclfbpmKYX0DoMcu8EmQeO1xyziOBv9/WjuWR6y3/ovgF74QTaLhC', 'admin@seeder.local', 'Administrator', 'admin');
 
 -- ============================================================================
 -- Table: organizations

@@ -67,7 +67,7 @@ class Config {
      * Get public page URL
      */
     public static function page(string $page): string {
-        return self::url("public/$page");
+        return self::url($page);
     }
 
     /**
