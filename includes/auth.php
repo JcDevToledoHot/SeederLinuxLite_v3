@@ -12,11 +12,16 @@ require_once __DIR__ . '/../lib/functions.php';
 
 // Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
+    // Detect HTTPS reliably (works behind reverse proxy / SSL termination)
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (($_SERVER['SERVER_PORT'] ?? '') == 443)
+        || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+
     session_set_cookie_params([
         'lifetime' => 86400, // 24 hours
         'path' => '/',
         'domain' => '',
-        'secure' => isset($_SERVER['HTTPS']), // HTTPS only in production
+        'secure' => $isHttps,
         'httponly' => true,
         'samesite' => 'Lax'
     ]);

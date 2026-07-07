@@ -112,11 +112,13 @@
         document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const data = await API.get('session');
+                console.log('[Login] Session check:', data);
                 if (data.success) {
+                    console.log('[Login] Already logged in, redirecting to admin');
                     window.location.href = '/admin.html';
                 }
             } catch (error) {
-                // Not logged in, show form
+                console.log('[Login] Not logged in:', error);
             }
         });
 
@@ -137,14 +139,17 @@
 
             try {
                 const data = await API.post('login', { username, password });
+                console.log('[Login] Login response:', data);
 
                 if (data.success) {
+                    console.log('[Login] Login successful, redirecting to admin');
                     window.location.href = '/admin.html';
                 } else {
                     errorMessage.textContent = data.error || 'Erro ao realizar login';
                     errorMessage.classList.remove('hidden');
                 }
             } catch (error) {
+                console.error('[Login] Login error:', error);
                 errorMessage.textContent = 'Erro de conexão. Tente novamente.';
                 errorMessage.classList.remove('hidden');
             } finally {

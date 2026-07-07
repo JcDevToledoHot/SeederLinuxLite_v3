@@ -7,8 +7,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Check authentication
     try {
         const session = await API.get('session');
+        console.log('[Admin] Session check:', session);
         if (!session.success) {
-window.location.href = '/login.html';
+            console.log('[Admin] Not authenticated, redirecting to login');
+            window.location.href = '/login.html';
             return;
         }
 
@@ -17,7 +19,8 @@ window.location.href = '/login.html';
         document.getElementById('user-initial').textContent = (session.data.full_name || session.data.username).charAt(0).toUpperCase();
         document.getElementById('user-role').textContent = session.data.role === 'admin' ? 'Administrador' : 'Gerente';
     } catch (error) {
-window.location.href = '/login.html';
+        console.error('[Admin] Session check failed:', error);
+        window.location.href = '/login.html';
         return;
     }
 
